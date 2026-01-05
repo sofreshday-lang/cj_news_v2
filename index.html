@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CJ 뉴스 모니터링 PRO</title>
+    <style>
+        :root {
+            --cj-red: #D9151E;
+            --cj-orange: rgb(255, 151, 0);
+            --cj-orange-subtle: rgba(255, 151, 0, 0.05);
+            --cj-blue: rgb(0, 110, 205);
+            --background: #f8f9fa;
+            --foreground: #2d3436;
+            --card-bg: #ffffff;
+            --border-color: #dfe6e9;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--cj-red);
+            display: flex;
+            align-items: baseline;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .signature {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #b2bec3;
+            letter-spacing: 0.5px;
+        }
+
+        /* Card Panels */
+        .panel {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            color: #636e72;
+            border-left: 4px solid var(--cj-orange);
+            padding-left: 0.8rem;
+        }
+
+        /* Form Elements */
+        .section {
+            margin-bottom: 1.5rem;
+        }
+
+        .label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+            color: #2d3436;
+        }
+
+        /* Keyword Selection */
+        .keyword-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.7rem 1.25rem;
+            background: var(--cj-orange-subtle);
+            border: 1px solid rgba(255, 151, 0, 0.15);
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4b4b4b;
+            transition: 0.2s;
+        }
+
+        .checkbox-label:hover {
+            background: rgba(255, 151, 0, 0.12);
+            border-color: var(--cj-orange);
+        }
+
+        .checkbox-label.checked {
+            background: var(--cj-blue);
+            border-color: var(--cj-blue);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 110, 205, 0.2);
+        }
+
+        /* Custom Input & Logic */
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .text-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .text-input:focus {
+            border-color: var(--cj-blue);
+        }
+
+        .logic-selector {
+            display: flex;
+            background: #f1f2f6;
+            border-radius: 8px;
+            padding: 0.3rem;
+        }
+
+        .logic-btn {
+            flex: 1;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #a4b0be;
+            background: transparent;
+            transition: 0.2s;
+        }
+
+        .logic-btn.active {
+            background: #fff;
+            color: var(--cj-blue);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Dropdowns & Pickers */
+        .settings-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        select,
+        input[type="date"] {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        /* Buttons */
+        .btn-search {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--cj-blue), #004d90);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn-search:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-search:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Results */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .keyword-section {
+            margin-bottom: 2rem;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background: #fff;
+        }
+
+        .section-header {
+            padding: 1rem 1.5rem;
+            background: #fdfdfd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .news-grid {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            border-top: 1px solid #f1f2f6;
+        }
+
+        .news-card {
+            padding: 1rem;
+            border: 1px solid #f1f2f6;
+            border-radius: 8px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: 0.2s;
+        }
+
+        .news-card:hover {
+            border-color: var(--cj-blue);
+            background: #f0f7ff;
+        }
+
+        .news-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #2d3436;
+        }
+
+        .news-meta {
+            font-size: 0.8rem;
+            color: #b2bec3;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty {
+            padding: 3rem;
+            text-align: center;
+            color: #b2bec3;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">CJ 뉴스 모니터링 <span class="signature">Created by Y.J.E</span></h1>
+        </div>
+
+        <!-- Search Panel -->
+        <div class="panel">
+            <div class="panel-title">검색 키워드 설정</div>
+
+            <div class="section">
+                <span class="label">대상 키워드 선택</span>
+                <div class="keyword-grid" id="keyword-container"></div>
+                <div style="margin-top: 0.8rem; display:flex; gap: 0.5rem">
+                    <button class="logic-btn" style="color: #636e72; background: #eee" onclick="selectAll()">전체
+                        선택</button>
+                    <button class="logic-btn" style="color: #636e72; background: #eee" onclick="deselectAll()">전체
+                        해제</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <span class="label">추가 입력 및 조합</span>
+                <div class="input-group">
+                    <input type="text" id="custom-keyword" class="text-input" placeholder="추가 검색어를 입력하세요 (예: 사회공헌)">
+                    <div class="logic-selector">
+                        <button class="logic-btn active" id="logic-or" onclick="setLogic('OR')">OR 조합</button>
+                        <button class="logic-btn" id="logic-and" onclick="setLogic('AND')">AND 조합</button>
+                    </div>
+                </div>
+                <p style="font-size: 0.8rem; color: #b2bec3; margin-top: 0.5rem">
+                    AND 선택 시: "선택 키워드" + "입력 키워드"가 모두 포함된 뉴스만 검색됩니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="panel">
+            <div class="panel-title">상세 조건 설정</div>
+            <div class="settings-row">
+                <div class="section">
+                    <span class="label">검색 기간 (간편 선택)</span>
+                    <select id="period-preset" onchange="applyPreset()">
+                        <option value="1">최근 24시간</option>
+                        <option value="3">최근 3일</option>
+                        <option value="7">최근 7일</option>
+                        <option value="14" selected>최근 14일</option>
+                        <option value="30">최근 30일</option>
+                        <option value="custom">직접 선택 (달력)</option>
+                    </select>
+                </div>
+                <div class="section">
+                    <span class="label">결과 표시 개수</span>
+                    <select id="display-count">
+                        <option value="10">10개씩</option>
+                        <option value="20">20개씩</option>
+                        <option value="30">30개씩</option>
+                        <option value="40">40개씩</option>
+                        <option value="50" selected>50개씩</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-row hidden" id="date-picker-row">
+                <div class="section">
+                    <span class="label">시작일</span>
+                    <input type="date" id="start-date">
+                </div>
+                <div class="section">
+                    <span class="label">종료일</span>
+                    <input type="date" id="end-date">
+                </div>
+            </div>
+        </div>
+
+        <button id="search-btn" class="btn-search" onclick="handleSearch()">실시간 뉴스 모니터링 시작</button>
+
+        <!-- Results -->
+        <div id="results-section" class="hidden" style="margin-top: 2rem;">
+            <div class="results-header">
+                <h2 style="font-size: 1.2rem; font-weight: 800;">검색 결과</h2>
+                <span id="last-updated" style="font-size: 0.9rem; color: #b2bec3;"></span>
+            </div>
+            <div id="results-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const KEYWORDS = ["ESG", "사회공헌", "동반성장", "지속가능경영", "중소기업 상생", "CJ온스타일", "CJ엔터", "CJ 이재현", "CJ 이선호"];
+        let selectedKws = [];
+        let currentLogic = 'OR';
+
+        function renderKeywords() {
+            const container = document.getElementById('keyword-container');
+            container.innerHTML = KEYWORDS.map(kw => {
+                const isChecked = selectedKws.includes(kw);
+                return `<label class="checkbox-label ${isChecked ? 'checked' : ''}" onclick="toggleKw('${kw}')">${isChecked ? '✓ ' : ''}${kw}</label>`;
+            }).join('');
+        }
+
+        function toggleKw(kw) {
+            if (selectedKws.includes(kw)) selectedKws = selectedKws.filter(k => k !== kw);
+            else selectedKws.push(kw);
+            renderKeywords();
+        }
+
+        function selectAll() { selectedKws = [...KEYWORDS]; renderKeywords(); }
+        function deselectAll() { selectedKws = []; renderKeywords(); }
+
+        function setLogic(logic) {
+            currentLogic = logic;
+            document.getElementById('logic-or').classList.toggle('active', logic === 'OR');
+            document.getElementById('logic-and').classList.toggle('active', logic === 'AND');
+        }
+
+        function applyPreset() {
+            const preset = document.getElementById('period-preset').value;
+            const picker = document.getElementById('date-picker-row');
+            if (preset === 'custom') {
+                picker.classList.remove('hidden');
+            } else {
+                picker.classList.add('hidden');
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - parseInt(preset));
+                document.getElementById('start-date').value = start.toISOString().split('T')[0];
+                document.getElementById('end-date').value = end.toISOString().split('T')[0];
+            }
+        }
+
+        async function handleSearch() {
+            if (selectedKws.length === 0 && !document.getElementById('custom-keyword').value) {
+                alert('키워드를 선택하거나 입력해주세요.'); return;
+            }
+
+            const btn = document.getElementById('search-btn');
+            btn.disabled = true; btn.textContent = '데이터 분석 중...';
+
+            const params = {
+                keywords: selectedKws,
+                custom_keyword: document.getElementById('custom-keyword').value,
+                logic: currentLogic,
+                display: document.getElementById('display-count').value,
+                start_date: document.getElementById('start-date').value,
+                end_date: document.getElementById('end-date').value
+            };
+
+            try {
+                const res = await fetch('/api/news', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await res.json();
+
+                document.getElementById('results-section').classList.remove('hidden');
+                const container = document.getElementById('results-container');
+                container.innerHTML = '';
+
+                Object.keys(data).forEach(kw => {
+                    const items = data[kw];
+                    const section = document.createElement('div');
+                    section.className = 'keyword-section';
+                    section.innerHTML = `
+                    <div class="section-header">
+                        <span style="font-weight:700">${kw}</span>
+                        <span style="font-size:0.85rem; color:var(--cj-blue)">검색 결과 ${items.length}건</span>
+                    </div>
+                    ${items.length > 0 ? `
+                        <div class="news-grid">
+                            ${items.map(item => `
+                                <a href="${item.link}" target="_blank" class="news-card">
+                                    <div class="news-title">${item.title}</div>
+                                    <div class="news-meta">
+                                        <span>네이버뉴스</span>
+                                        <span>${item.pubDate.split(' ')[0]}</span>
+                                    </div>
+                                </a>
+                            `).join('')}
+                        </div>
+                    ` : '<div class="empty">지정한 기간 내 기사가 없습니다.</div>'}
+                `;
+                    container.appendChild(section);
+                });
+                document.getElementById('last-updated').textContent = `업데이트: ${new Date().toLocaleTimeString()}`;
+            } catch (e) {
+                alert('검색 중 오류가 발생했습니다.');
+            } finally {
+                btn.disabled = false; btn.textContent = '실시간 뉴스 모니터링 시작';
+            }
+        }
+
+        // Init
+        applyPreset();
+        renderKeywords();
+    </script>
+
+</body>
+
+</html>
