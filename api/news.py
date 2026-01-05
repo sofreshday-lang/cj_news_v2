@@ -3,9 +3,12 @@ import json
 import os
 import urllib.request
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import re
 from difflib import SequenceMatcher
+
+# 한국 시간대 설정 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 def clean_html(raw_html):
     if not raw_html: return ""
@@ -16,6 +19,7 @@ def clean_html(raw_html):
 
 def parse_pubdate(pubdate_str):
     try:
+        # 네이버 pubDate 예시: Mon, 05 Jan 2026 15:45:00 +0900
         return datetime.strptime(pubdate_str, "%a, %d %b %Y %H:%M:%S %z")
     except:
         return None
@@ -27,31 +31,39 @@ def is_similar(a, b, threshold=0.8):
 def process_news_search(client_id, client_secret, params):
     keywords = params.get('keywords', [])
     custom_keyword = params.get('custom_keyword', '').strip()
-    logic = params.get('logic', 'OR') # AND / OR
+    logic = params.get('logic', 'OR')
     display_count = int(params.get('display', 50))
     
-    # Date handling
-    start_date_str = params.get('start_date') # YYYY-MM-DD
-    end_date_str = params.get('end_date')     # YYYY-MM-DD
+    # 날짜 처리 (KST 기준)
+    now_kst = datetime.now(KST)
+    start_date_str = params.get('start_date')
+    end_date_str = params.get('end_date')
     
-    if start_date_str:
-        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").replace(hour=0, minute=0, second=0).astimezone()
-    else:
-        # Default 14 days
-        start_date = (datetime.now() - timedelta(days=14)).astimezone()
-        
-    if end_date_str:
-        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").replace(hour=23, minute=59, second=59).astimezone()
-    else:
-        end_date = datetime.now().astimezone()
+    try:
+        if start_date_str and start_date_str.strip():
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").replace(hour=0, minute=0, second=0, tzinfo=KST)
+        else:
+            start_date = (now_kst - timedelta(days=14)).replace(hour=0, minute=0, second=0)
+            
+        if end_date_str and end_date_str.strip():
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=KST)
+        else:
+            end_date = now_kst
+    except Exception as e:
+        # 파싱 실패 시 기본값 14일 전
+        start_date = (now_kst - timedelta(days=14)).replace(hour=0, minute=0, second=0)
+        end_date = now_kst
 
     final_results = {}
     
-    # Search targets
+    # 검색 방식 로직
     search_list = []
-    if logic == 'AND' and custom_keyword:
-        for kw in keywords:
-            search_list.append(f"{kw} {custom_keyword}")
+    if logic == 'AND':
+        combined = " ".join(keywords)
+        if custom_keyword:
+            combined = (combined + " " + custom_keyword).strip()
+        if combined:
+            search_list.append(combined)
     else:
         search_list = list(keywords)
         if custom_keyword:
@@ -60,6 +72,7 @@ def process_news_search(client_id, client_secret, params):
     for query in search_list:
         try:
             encText = urllib.parse.quote(query)
+            # 달력 검색을 위해 최대치인 100개를 가져옴
             api_count = 100 
             url = f"https://openapi.naver.com/v1/search/news.json?query={encText}&display={api_count}&sort=date"
             
@@ -79,6 +92,7 @@ def process_news_search(client_id, client_secret, params):
             for item in items:
                 p_date = parse_pubdate(item['pubDate'])
                 if p_date:
+                    # KST 기준 시간 비교
                     if start_date <= p_date <= end_date:
                         parsed_items.append({'original': item, 'date': p_date})
             

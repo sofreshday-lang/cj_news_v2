@@ -431,6 +431,7 @@
                 const end = new Date();
                 const start = new Date();
                 start.setDate(end.getDate() - parseInt(preset));
+                // 날짜 전송용 포맷 (YYYY-MM-DD)
                 document.getElementById('start-date').value = start.toISOString().split('T')[0];
                 document.getElementById('end-date').value = end.toISOString().split('T')[0];
             }
@@ -446,7 +447,7 @@
 
             const params = {
                 keywords: selectedKws,
-                custom_keyword: document.getElementById('custom-keyword').value,
+                custom_keyword: document.getElementById('custom-keyword').value.trim(),
                 logic: currentLogic,
                 display: document.getElementById('display-count').value,
                 start_date: document.getElementById('start-date').value,
@@ -492,7 +493,8 @@
                 });
                 document.getElementById('last-updated').textContent = `업데이트: ${new Date().toLocaleTimeString()}`;
             } catch (e) {
-                alert('검색 중 오류가 발생했습니다.');
+                console.error(e);
+                alert('검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
             } finally {
                 btn.disabled = false; btn.textContent = '실시간 뉴스 모니터링 시작';
             }
